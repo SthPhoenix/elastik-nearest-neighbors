@@ -35,8 +35,9 @@
 ### Added new request arguments:
 1. **rescore (_boolean_)** - switches on/off final L2 metric based scoring. In some cases improves search speed at 10x, while maintaining acceptable recall. (some tweaks to index mapping are required to preserve high recall)
 2. **debug (_boolean_)** - keep original vectors and hashes if set to true, usefull for tinkering with metrics and scoring, also might be usefull for clustering query results.
-3. **minimum_should_match (_integer_)** - changing corresponding ES bool query argument, might improve search speed by lowering number of hits ES should score.
-4. **filter (_string_)** - ES [bool query](https://www.elastic.co/guide/en/elasticsearch/reference/6.5/query-filter-context.html) filter as string. Is a string you would normaly put inside a filter clause, i.e if your filter looks like this: 
+3. **minimum_should_match (_integer_)** - changing corresponding ES bool query argument, might improve search speed by lowering number of hits ES should score. Default value - **1**
+4. **metric (_string_)** - Similarity metric. Available values: **l2**, **cosine**, **dot**. Default value - **l2** 
+5. **filter (_string_)** - ES [bool query](https://www.elastic.co/guide/en/elasticsearch/reference/6.5/query-filter-context.html) filter as string. Is a string you would normaly put inside a filter clause, i.e if your filter looks like this: 
      ```
     "filter":{ 
         "term":  { 
