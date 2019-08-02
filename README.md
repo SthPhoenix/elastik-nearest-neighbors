@@ -52,13 +52,16 @@ All original REST endpoints should work just like before, examples for new endpo
 ### Precompiled release:
 This fork was originally compiled and tested for ES 6.5.1, but it should work for es 6.4.1-6.5.4. So I have added [precompiled](https://github.com/SthPhoenix/elastik-nearest-neighbors/releases) plugins for all these ES versions. (6.4.0 should work too, but I just forget to compile it).
 
+### Docker:
+Added bash script for quick assembly using official gradle image
+
 ### TODO:
-1. Update README with examples of new endpoints.
-2. Add explanation of tweaks to mapping required to increase speed and recall.
-3. Add figures of benchmarks before and after tweaks.
-2. Figure out how to clear cached LSH model on all nodes at once.
-3. Try to refactor `_aknn_index` and `_aknn_create` endpoints into ingest plugin, to allow using default ES APIs for indexing.
-4. Implement cosine metric (not just metric, but hashing algorithm, obviously).
+- [ ] Update README with examples of new endpoints.
+- [ ] Add explanation of tweaks to mapping required to increase speed and recall.
+- [ ] Add figures of benchmarks before and after tweaks.
+- [ ] Figure out how to clear cached LSH model on all nodes at once.
+- [ ] Try to refactor `_aknn_index` and `_aknn_create` endpoints into ingest plugin, to allow using default ES APIs for indexing.
+- [x] Implement cosine metric and dot product.
 
 ***
 _Original readme_
