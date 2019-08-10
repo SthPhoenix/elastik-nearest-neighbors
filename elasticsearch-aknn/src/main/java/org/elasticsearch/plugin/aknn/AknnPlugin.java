@@ -24,23 +24,35 @@ import org.elasticsearch.common.settings.IndexScopedSettings;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.SettingsFilter;
+
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.plugins.ActionPlugin;
 import org.elasticsearch.plugins.Plugin;
+import org.elasticsearch.plugins.IngestPlugin;
+import org.elasticsearch.ingest.Processor;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestHandler;
+import org.elasticsearch.client.Client;
 
-import java.util.Arrays;
+import java.util.Collections;
+
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.Map;
+import java.util.HashMap;
 
-public class AknnPlugin extends Plugin implements ActionPlugin {
+
+
+public class AknnPlugin extends Plugin implements ActionPlugin, IngestPlugin {
 
     private static final Setting<String> SETTINGS =
             new Setting<>("aknn.sample.setting", "foo", (value) -> value, Setting.Property.NodeScope);
 
+
+
     @Override
     public List<Setting<?>> getSettings() {
-        return Arrays.asList(SETTINGS);
+        return Collections.singletonList(SETTINGS);
     }
 
     @Override
@@ -51,6 +63,16 @@ public class AknnPlugin extends Plugin implements ActionPlugin {
                                              final SettingsFilter settingsFilter,
                                              final IndexNameExpressionResolver indexNameExpressionResolver,
                                              final Supplier<DiscoveryNodes> nodesInCluster) {
-        return Arrays.asList(new AknnRestAction(settings, restController));
+        return Collections.singletonList(new AknnRestAction(settings, restController));
     }
+
+    @Override
+    public Map<String, Processor.Factory> getProcessors(Processor.Parameters parameters) {
+
+        Map<String, Processor.Factory> factoryMap = new HashMap<>(1);
+        factoryMap.put(AknnProcessor.TYPE, new AknnProcessor.Factory());
+        return factoryMap;
+    }
+
+
 }
