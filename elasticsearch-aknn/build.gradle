@@ -1,4 +1,4 @@
-import org.elasticsearch.gradle.test.RestIntegTestTask
+//import org.elasticsearch.gradle.test.RestIntegTestTask
 
 buildscript {
   repositories {
@@ -7,26 +7,28 @@ buildscript {
   }
 
   dependencies {
-      classpath "org.elasticsearch.gradle:build-tools:7.3.0"
+    classpath "org.elasticsearch.gradle:build-tools:7.3.0"
   }
 }
 
-// remove this again after 7.3.0 - from @spinscale ingest-langdetect
+// remove this again after 7.3.0
 configurations.all {
   resolutionStrategy.dependencySubstitution {
-    substitute project(':rest-api-spec') with module ("org.elasticsearch:rest-api-spec:${elasticsearchVersion}")
+    substitute project(':rest-api-spec') with module ("org.elasticsearch:rest-api-spec:7.3.0")
   }
 }
 
+
 group = 'org.elasticsearch.plugin.aknn'
-version = '7.3.0-0.0.4'
+version = '7.3.0-v0.0.5'
+
+
 
 apply plugin: 'java'
-apply plugin: 'elasticsearch.esplugin'
 apply plugin: 'idea'
+apply plugin: 'elasticsearch.esplugin'
 
-// Required for ES5.6
-//ext.projectSubstitutions = [:]
+
 
 // license of this project
 licenseFile = rootProject.file('LICENSE.txt')
@@ -47,8 +49,23 @@ esplugin {
 // In this section you declare the dependencies for your production and test code
 // TODO: See https://youtu.be/7alCuE7cNVQ?t=12m41s for a potential solution to original ND4J problems.
 dependencies {
-    compile 'org.apache.commons:commons-math3:3.6.1'
+  compile 'org.apache.commons:commons-math3:3.6.1'
+  compile 'org.apache.commons:commons-lang3:3.0'
 }
+
+//test {
+//    enabled true
+//    testLoggingConfig.setOutputMode(
+//        com.carrotsearch.gradle.junit4.TestLoggingConfiguration.OutputMode.ALWAYS
+//    )
+//}
+
+//integTestRunner {
+//    enabled true
+//    testLoggingConfig.setOutputMode(
+//        com.carrotsearch.gradle.junit4.TestLoggingConfiguration.OutputMode.ALWAYS
+//    )
+//}
 
 // Set to false to not use elasticsearch checkstyle rules.
 checkstyleMain.enabled = true
