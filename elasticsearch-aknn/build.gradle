@@ -20,7 +20,7 @@ configurations.all {
 
 
 group = 'org.elasticsearch.plugin.aknn'
-version = '7.3.0-v0.0.5'
+version = '7.3.0-v0.0.6'
 
 
 
