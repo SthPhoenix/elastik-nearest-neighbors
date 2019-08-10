@@ -1,5 +1,72 @@
 ## Changes to original version:
 
+### Added ingest processor module
+Register new Elasticsearch ingest processor - `aknn`, which can be used for indexing new documents using default ES API.
+
+Using this plugin for indexing increases indexing speed and allow ES to automatically balance incoming index requests 
+between nodes.
+
+To register new pipeline with Python `elasticsearch` API:
+
+```python
+import elasticsearch
+
+def put_pipeline(model_name, models_index='aknn_models',vec_field='_aknn_vector'):
+    # Get model created with _aknn_create 
+    model = es.get(models_index, model_name)['_source']
+    description = model['_aknn_description']
+    pipeline_name = model_name
+    # Add 'aknn.' prefix to pipeline name for convenience
+    if not model_name.startswith('aknn.'):
+        pipeline_name = 'aknn.{}'.format(model_name)
+
+    ingest_body = {
+        "description": description,
+        "processors": [
+            {
+                "aknn": {
+                    "field": vec_field,
+                    "target_field": "_aknn_hashes",
+                    'model': model,
+                }
+            }
+        ]
+    }
+
+    response = es.ingest.put_pipeline(id=pipeline_name, body=ingest_body, request_timeout=60)
+    return response
+```
+
+To index documents:
+```python
+    # Register pipeline for model 'test_model'
+    put_pipeline('test_model')
+
+    # Create some doc for test:
+    doc = {
+        '_aknn_vector':[0.12,0.432,0.2342]
+    }
+
+    #Add document to index:
+    es.index(index='test_index',body=doc, pipeline='aknn.test_model')
+```
+
+Or you can simulate pipeline without actually indexing document:
+
+```
+    docs = {
+        "docs":[
+            {"_source":{'_aknn_vector':[0.12,0.432,0.2342]}},
+            {"_source":{'_aknn_vector':[0.22,0.231,0.5321]}},
+        ]
+    }
+    resp = es.ingest.simulate(id='aknn.test_model',body=docs)
+```
+
+Also you can use response of pipeline simulate to get vector hashes and use them for building request to ES without
+using `_aknn_search` or `_aknn_search_vec`, i.e for building complicated bool queries using other fields. 
+
+
 ### Added new REST endpoints:
 
 1. **`_aknn_search_vec`** - hybrid of original `_aknn_search` and `_aknn_index` endpoints: it accepts JSON with query vector, builds hashes for `_aknn_vector` and using them for building ES query and returning hits just like original `_aknn_search` endpoint.
@@ -48,9 +115,10 @@
    You should put `{ "term":  { "status": "published" }}` in filter argument.
    
 All original REST endpoints should work just like before, examples for new endpoints would be added later.
-   
+    
 ### Precompiled release:
-This fork was originally compiled and tested for ES 6.5.1, but it should work for es 6.4.1-6.5.4. So I have added [precompiled](https://github.com/SthPhoenix/elastik-nearest-neighbors/releases) plugins for all these ES versions. (6.4.0 should work too, but I just forget to compile it).
+This fork was originally compiled and tested for ES 6.5.1, but it should work for es 6.4.1-6.5.4. So I have added 
+[precompiled](https://github.com/SthPhoenix/elastik-nearest-neighbors/releases) plugins for all these ES versions. (6.4.0 should work too, but I just forget to compile it).
 
 ### Docker:
 Added bash script for quick assembly using official gradle image
