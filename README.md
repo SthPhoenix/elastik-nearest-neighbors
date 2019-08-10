@@ -1,5 +1,38 @@
 ## Changes to original version:
 
+### Updated for ES 7.3 dense vector and script_scoring
+> #### _IMPORTANT! This update is incompatible with original version and require you to reindex data._
+
+This is a major update in terms of search speed and recall improvement:
+
+In previous versions top **k1** matches were used for scoring to get final **k2** nearest neighbours. 
+I.E. if you request k1 = 100 and you have 6 shards, each shard would collect 100 matches, which is 600 matches in total,
+than client node will select 100 matches out of this 600 based on score returned by bool query and use only this subset
+for scoring. So 500 hits were just left behind unchecked.
+
+Now plugin uses built-in [script_scoring](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-script-score-query.html)
+in `rescore` context, which means that EACH shard will score **k1** hits before getting final **k2** hits. 
+So in example above plugin will scan k1*n_shards = 600 hits.
+
+Also, thanks to new 
+[dense vector](https://www.elastic.co/guide/en/elasticsearch/reference/current/dense-vector.html) data type, 
+exact distance computation is now much faster, actually you can set `k1 = 10000` (which means that for example above
+plugin will compute distances for 60,000 vectors) and get result in same time as you'll get for `k1=500` in previous 
+versions.
+
+However this update have some drawbacks:
+1. You should store vectors using `dense_vector` data type mapping, so you'll need to reindex your data.
+2. ES 7.3 `script_score` supports only `dotProduct` and `cosineSimilarity` for distance computation, so `l2` metric  is
+currently unavailable (`l2norm` and `l1norm` should be added with next update though)
+3. `dense_vector` data type and vector distance metrics are experimental parts of X-Pack plugin, which means two things: 
+    * they could be changed or removed in future releases (hope not)
+    * they couldn't be used in Elasticsearch OSS (open-source) distributions, due to requirement for basic ES license.
+    (it's free however). 
+
+ 
+ 
+
+
 ### Added ingest processor module
 Register new Elasticsearch ingest processor - `aknn`, which can be used for indexing new documents using default ES API.
 
@@ -103,7 +136,7 @@ using `_aknn_search` or `_aknn_search_vec`, i.e for building complicated bool qu
 1. **rescore (_boolean_)** - switches on/off final L2 metric based scoring. In some cases improves search speed at 10x, while maintaining acceptable recall. (some tweaks to index mapping are required to preserve high recall)
 2. **debug (_boolean_)** - keep original vectors and hashes if set to true, usefull for tinkering with metrics and scoring, also might be usefull for clustering query results.
 3. **minimum_should_match (_integer_)** - changing corresponding ES bool query argument, might improve search speed by lowering number of hits ES should score. Default value - **1**
-4. **metric (_string_)** - Similarity metric. Available values: **l2**, **cosine**, **dot**. Default value - **l2** 
+4. **metric (_string_)** - Similarity metric. Available values: **cosine**, **dot**. Default value - **dot** 
 5. **filter (_string_)** - ES [bool query](https://www.elastic.co/guide/en/elasticsearch/reference/6.5/query-filter-context.html) filter as string. Is a string you would normaly put inside a filter clause, i.e if your filter looks like this: 
      ```
     "filter":{ 
@@ -113,6 +146,12 @@ using `_aknn_search` or `_aknn_search_vec`, i.e for building complicated bool qu
      } 
      ```
    You should put `{ "term":  { "status": "published" }}` in filter argument.
+6. **n_probes** - how many hashes buckets should be used for search. Should be no greater than `_aknn_nb_tables`
+value used for model creation. It's usefull for selecting optimal trade-off between response time and recall at query 
+time. 
+    
+    I.e. you can use larger number of hashes tables for indexing if disk space is not a concern for you and later select
+    optimal ``n_probes`` for acceptable recall vs response time.
    
 All original REST endpoints should work just like before, examples for new endpoints would be added later.
     
